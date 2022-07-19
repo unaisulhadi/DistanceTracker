@@ -1,9 +1,9 @@
-package com.hadi.distancetracker
+package com.hadi.distancetracker.util
 
 import android.Manifest
 import android.content.Context
 import androidx.fragment.app.Fragment
-import com.hadi.distancetracker.Constants.PERMISSION_LOCATION_REQUEST_CODE
+import com.hadi.distancetracker.util.Constants.PERMISSION_LOCATION_REQUEST_CODE
 import com.vmadalin.easypermissions.EasyPermissions
 
 object Permissions {

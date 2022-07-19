@@ -1,4 +1,4 @@
-package com.hadi.distancetracker
+package com.hadi.distancetracker.util
 
 object Constants {
 
