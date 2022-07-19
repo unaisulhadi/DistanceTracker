@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">DistanceTracker</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="desc">Welcome to distance tracker. Inorder to use our app we\'ll first need to request location permission from you, Press the button below</string>
 </resources>
