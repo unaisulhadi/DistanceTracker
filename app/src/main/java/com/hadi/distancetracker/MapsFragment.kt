@@ -3,10 +3,12 @@ package com.hadi.distancetracker
 import androidx.fragment.app.Fragment
 
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -16,6 +18,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.hadi.distancetracker.databinding.FragmentMapsBinding
+import com.hadi.distancetracker.util.ExtensionFunctions.disable
 import com.hadi.distancetracker.util.ExtensionFunctions.hide
 import com.hadi.distancetracker.util.ExtensionFunctions.show
 import com.hadi.distancetracker.util.Permissions
@@ -57,10 +60,35 @@ class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButt
 
     private fun onStartButtonClicked() {
         if(Permissions.hasBackgroundLocationPermission(requireContext())){
-            Log.d("MapsFragment", "onStartButtonClicked: Already Enabled")
+            startCountDown()
+            binding.buttonStart.disable()
+            binding.buttonStart.hide()
+            binding.buttonStop.show()
         }else{
             Permissions.requestBackgroundLocationPermission(this)
         }
+    }
+
+    private fun startCountDown() {
+        binding.timerTextView.show()
+        binding.buttonStop.disable()
+        val timer = object : CountDownTimer(4000L,1000L) {
+            override fun onTick(millisUntilFinished: Long) {
+                val currentSecond = millisUntilFinished/1000
+                if(currentSecond.toString() == "0"){
+                    binding.timerTextView.text = "GO"
+                    binding.timerTextView.setTextColor(ContextCompat.getColor(requireContext(),R.color.black))
+                }else{
+                    binding.timerTextView.text = currentSecond.toString()
+                    binding.timerTextView.setTextColor(ContextCompat.getColor(requireContext(),R.color.red))
+                }
+            }
+
+            override fun onFinish() {
+                binding.timerTextView.hide()
+            }
+        }
+        timer.start()
     }
 
     override fun onRequestPermissionsResult(
