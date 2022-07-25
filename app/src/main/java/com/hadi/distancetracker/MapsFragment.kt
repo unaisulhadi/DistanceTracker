@@ -31,7 +31,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@AndroidEntryPoint
 class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButtonClickListener, EasyPermissions.PermissionCallbacks {
 
     private var _binding: FragmentMapsBinding? = null
