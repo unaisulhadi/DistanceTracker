@@ -1,5 +1,6 @@
 package com.hadi.distancetracker
 
+import android.content.Intent
 import androidx.fragment.app.Fragment
 
 import android.os.Bundle
@@ -18,15 +19,19 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.hadi.distancetracker.databinding.FragmentMapsBinding
+import com.hadi.distancetracker.service.TrackerService
+import com.hadi.distancetracker.util.Constants
 import com.hadi.distancetracker.util.ExtensionFunctions.disable
 import com.hadi.distancetracker.util.ExtensionFunctions.hide
 import com.hadi.distancetracker.util.ExtensionFunctions.show
 import com.hadi.distancetracker.util.Permissions
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButtonClickListener, EasyPermissions.PermissionCallbacks {
 
     private var _binding: FragmentMapsBinding? = null
@@ -85,6 +90,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButt
             }
 
             override fun onFinish() {
+                sendActionCommandToService(Constants.ACTION_SERVICE_START)
                 binding.timerTextView.hide()
             }
         }
@@ -127,8 +133,14 @@ class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButt
             isScrollGesturesEnabled = false
             //isMyLocationButtonEnabled = true
         }
+    }
 
 
+    fun sendActionCommandToService(action : String) {
+        Intent(requireContext(),TrackerService::class.java).apply {
+            this.action = action
+            requireContext().startService(this)
+        }
 
     }
 
