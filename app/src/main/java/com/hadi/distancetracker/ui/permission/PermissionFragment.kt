@@ -1,4 +1,4 @@
-package com.hadi.distancetracker
+package com.hadi.distancetracker.ui.permission
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.navigation.fragment.findNavController
+import com.hadi.distancetracker.R
 import com.hadi.distancetracker.databinding.FragmentPermissionBinding
 import com.hadi.distancetracker.util.Permissions
 import com.vmadalin.easypermissions.EasyPermissions

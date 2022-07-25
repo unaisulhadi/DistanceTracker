@@ -1,9 +1,10 @@
-package com.hadi.distancetracker
+package com.hadi.distancetracker.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
+import com.hadi.distancetracker.R
 import com.hadi.distancetracker.util.Permissions
 import dagger.hilt.android.AndroidEntryPoint
 
