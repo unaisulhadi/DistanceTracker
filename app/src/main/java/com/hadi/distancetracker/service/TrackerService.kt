@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
 import android.content.Intent
+import android.location.Location
 import android.os.Build
 import android.os.Looper
 import android.util.Log
@@ -35,22 +36,32 @@ class TrackerService : LifecycleService() {
 
     companion object {
         val started = MutableLiveData<Boolean>()
+        val locationList = MutableLiveData<MutableList<LatLng>>()
+    }
+
+    private fun setInitialValues() {
+        started.postValue(false)
+        locationList.postValue(mutableListOf())
     }
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             super.onLocationResult(result)
-            for(location in result.locations){
-                val newLatLng = LatLng(location.latitude,location.longitude)
-                Log.d("TrackerService", "onLocationResult: ${newLatLng.toString()}")
+            for (location in result.locations) {
+                updateLocationList(location)
+                Log.d("TrackerService", "onLocationResult: ")
             }
         }
     }
 
-    private fun setInitialValues() {
-        started.postValue(false)
-    }
 
+    private fun updateLocationList(location: Location) {
+        val newLatLng = LatLng(location.latitude, location.longitude)
+        locationList.value?.apply {
+            add(newLatLng)
+            locationList.postValue(this)
+        }
+    }
 
     override fun onCreate() {
         setInitialValues()
@@ -91,7 +102,9 @@ class TrackerService : LifecycleService() {
             fastestInterval = LOCATION_FASTEST_UPDATE_INTERVAL
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
-        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest,
+            locationCallback,
+            Looper.getMainLooper())
     }
 
     private fun createNotificationChannel() {

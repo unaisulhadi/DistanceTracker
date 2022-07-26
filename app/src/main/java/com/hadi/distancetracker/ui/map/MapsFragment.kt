@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
 import com.hadi.distancetracker.R
 import com.hadi.distancetracker.databinding.FragmentMapsBinding
 import com.hadi.distancetracker.service.TrackerService
@@ -34,6 +36,8 @@ class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButt
 
     private lateinit var map:GoogleMap
 
+    private var locationList = mutableListOf<LatLng>()
+    
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -130,8 +134,17 @@ class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButt
             isScrollGesturesEnabled = false
             //isMyLocationButtonEnabled = true
         }
+        observeTrackerService()
     }
 
+    private fun observeTrackerService() {
+        TrackerService.locationList.observe(viewLifecycleOwner){
+            if(it != null){
+                locationList = it
+                Log.d("MapFragment", "observeTrackerService: ${locationList.toString()}")
+            }
+        }
+    }
 
     fun sendActionCommandToService(action : String) {
         Intent(requireContext(),TrackerService::class.java).apply {
