@@ -3,6 +3,7 @@ package com.hadi.distancetracker.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
+import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.Build
@@ -36,11 +37,15 @@ class TrackerService : LifecycleService() {
 
     companion object {
         val started = MutableLiveData<Boolean>()
+        val startTime = MutableLiveData<Long>()
+        val stopTime = MutableLiveData<Long>()
         val locationList = MutableLiveData<MutableList<LatLng>>()
     }
 
     private fun setInitialValues() {
         started.postValue(false)
+        startTime.postValue(0L)
+        stopTime.postValue(0L)
         locationList.postValue(mutableListOf())
     }
 
@@ -80,13 +85,27 @@ class TrackerService : LifecycleService() {
                 }
                 ACTION_SERVICE_STOP -> {
                     started.postValue(false)
-                    stopSelf()
+                    stopForegroundService()
                 }
                 else -> {}
             }
         }
 
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    private fun stopForegroundService() {
+        removeLocationUpdates()
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(
+            NOTIFICATION_ID
+        )
+        stopForeground(true)
+        stopSelf()
+        stopTime.postValue(System.currentTimeMillis())
+    }
+
+    private fun removeLocationUpdates() {
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback)
     }
 
     private fun startForegroundService() {
@@ -105,6 +124,7 @@ class TrackerService : LifecycleService() {
         fusedLocationProviderClient.requestLocationUpdates(locationRequest,
             locationCallback,
             Looper.getMainLooper())
+        startTime.postValue(System.currentTimeMillis())
     }
 
     private fun createNotificationChannel() {

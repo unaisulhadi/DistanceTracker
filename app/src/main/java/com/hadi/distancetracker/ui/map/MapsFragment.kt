@@ -1,6 +1,7 @@
 package com.hadi.distancetracker.ui.map
 
 import android.content.Intent
+import android.graphics.Color
 import androidx.fragment.app.Fragment
 
 import android.os.Bundle
@@ -11,16 +12,19 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.maps.CameraUpdateFactory
 
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.*
 import com.hadi.distancetracker.R
 import com.hadi.distancetracker.databinding.FragmentMapsBinding
 import com.hadi.distancetracker.service.TrackerService
+import com.hadi.distancetracker.ui.map.MapUtils.setCameraPosition
 import com.hadi.distancetracker.util.Constants
 import com.hadi.distancetracker.util.ExtensionFunctions.disable
+import com.hadi.distancetracker.util.ExtensionFunctions.enable
 import com.hadi.distancetracker.util.ExtensionFunctions.hide
 import com.hadi.distancetracker.util.ExtensionFunctions.show
 import com.hadi.distancetracker.util.Permissions
@@ -29,15 +33,21 @@ import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButtonClickListener, EasyPermissions.PermissionCallbacks {
+class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener,
+    EasyPermissions.PermissionCallbacks {
 
     private var _binding: FragmentMapsBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var map:GoogleMap
+    private lateinit var map: GoogleMap
 
     private var locationList = mutableListOf<LatLng>()
-    
+
+
+
+    var startTime =0L
+    var stopTime = 0L
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -49,8 +59,10 @@ class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButt
         binding.buttonStart.setOnClickListener {
             onStartButtonClicked()
         }
-        binding.buttonStop.setOnClickListener {  }
-        binding.buttonReset.setOnClickListener {  }
+        binding.buttonStop.setOnClickListener {
+            onStopButtonClicked()
+        }
+        binding.buttonReset.setOnClickListener { }
 
         return binding.root
     }
@@ -63,27 +75,41 @@ class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButt
 
 
     private fun onStartButtonClicked() {
-        if(Permissions.hasBackgroundLocationPermission(requireContext())){
+        if (Permissions.hasBackgroundLocationPermission(requireContext())) {
             startCountDown()
             binding.buttonStart.disable()
             binding.buttonStart.hide()
             binding.buttonStop.show()
-        }else{
+        } else {
             Permissions.requestBackgroundLocationPermission(this)
         }
     }
 
+
+    private fun onStopButtonClicked() {
+        binding.buttonStop.hide()
+        binding.buttonStart.show()
+        stopForegroundService()
+    }
+
+
+    private fun stopForegroundService() {
+        binding.buttonStart.disable()
+        sendActionCommandToService(Constants.ACTION_SERVICE_STOP)
+    }
+
+
     private fun startCountDown() {
         binding.timerTextView.show()
         binding.buttonStop.disable()
-        val timer = object : CountDownTimer(4000L,1000L) {
+        val timer = object : CountDownTimer(4000L, 1000L) {
             override fun onTick(millisUntilFinished: Long) {
-                val currentSecond = millisUntilFinished/1000
-                if(currentSecond.toString() == "0"){
+                val currentSecond = millisUntilFinished / 1000
+                if (currentSecond.toString() == "0") {
                     binding.timerTextView.text = "GO"
                     binding.timerTextView.setTextColor(ContextCompat.getColor(requireContext(),
                         R.color.black))
-                }else{
+                } else {
                     binding.timerTextView.text = currentSecond.toString()
                     binding.timerTextView.setTextColor(ContextCompat.getColor(requireContext(),
                         R.color.red))
@@ -101,18 +127,18 @@ class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButt
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
-        grantResults: IntArray
+        grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        EasyPermissions.onRequestPermissionsResult(requestCode,permissions,grantResults,this)
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
     }
 
     override fun onPermissionsDenied(requestCode: Int, perms: List<String>) {
-        if(EasyPermissions.somePermissionPermanentlyDenied(this,perms[0])) {
+        if (EasyPermissions.somePermissionPermanentlyDenied(this, perms[0])) {
             SettingsDialog.Builder(requireActivity())
                 .build()
                 .show()
-        }else{
+        } else {
             Permissions.requestBackgroundLocationPermission(this)
         }
     }
@@ -138,16 +164,49 @@ class MapsFragment : Fragment(), OnMapReadyCallback , GoogleMap.OnMyLocationButt
     }
 
     private fun observeTrackerService() {
-        TrackerService.locationList.observe(viewLifecycleOwner){
-            if(it != null){
+        TrackerService.locationList.observe(viewLifecycleOwner) {
+            if (it != null) {
                 locationList = it
-                Log.d("MapFragment", "observeTrackerService: ${locationList.toString()}")
+                if (locationList.isNotEmpty()) {
+                    binding.buttonStop.enable()
+                }
+                drawPolyline()
+                followPolyline()
             }
+        }
+        TrackerService.startTime.observe(viewLifecycleOwner){
+            startTime = it
+        }
+        TrackerService.stopTime.observe(viewLifecycleOwner){
+            stopTime = it
         }
     }
 
-    fun sendActionCommandToService(action : String) {
-        Intent(requireContext(),TrackerService::class.java).apply {
+    private fun drawPolyline() {
+        val polyLine = map.addPolyline(
+            PolylineOptions().apply {
+                width(10f)
+                color(Color.BLUE)
+                jointType(JointType.ROUND)
+                startCap(ButtCap())
+                endCap(ButtCap())
+                addAll(locationList)
+            }
+        )
+    }
+
+    private fun followPolyline() {
+        if (locationList.isNotEmpty()) {
+            map.animateCamera(
+                CameraUpdateFactory.newCameraPosition(
+                    setCameraPosition(locationList.last())
+                ), 1000, null)
+        }
+    }
+
+
+    fun sendActionCommandToService(action: String) {
+        Intent(requireContext(), TrackerService::class.java).apply {
             this.action = action
             requireContext().startService(this)
         }
