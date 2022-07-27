@@ -14,6 +14,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
+import com.hadi.distancetracker.ui.map.MapUtil
 import com.hadi.distancetracker.util.Constants.ACTION_SERVICE_START
 import com.hadi.distancetracker.util.Constants.ACTION_SERVICE_STOP
 import com.hadi.distancetracker.util.Constants.LOCATION_FASTEST_UPDATE_INTERVAL
@@ -54,9 +55,22 @@ class TrackerService : LifecycleService() {
             super.onLocationResult(result)
             for (location in result.locations) {
                 updateLocationList(location)
+                updateNotificationPeriodically()
                 Log.d("TrackerService", "onLocationResult: ")
             }
         }
+    }
+
+    private fun updateNotificationPeriodically() {
+        notification.apply {
+            setContentTitle("Distance Travelled")
+            setContentText(locationList.value?.let {
+                MapUtil.calculateDistance(
+                    it
+                )
+            } +" KM")
+        }
+        notificationManager.notify(NOTIFICATION_ID, notification.build())
     }
 
 

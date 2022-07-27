@@ -6,11 +6,11 @@ import androidx.fragment.app.Fragment
 
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.CameraUpdateFactory
 
@@ -21,7 +21,7 @@ import com.google.android.gms.maps.model.*
 import com.hadi.distancetracker.R
 import com.hadi.distancetracker.databinding.FragmentMapsBinding
 import com.hadi.distancetracker.service.TrackerService
-import com.hadi.distancetracker.ui.map.MapUtils.setCameraPosition
+import com.hadi.distancetracker.ui.map.MapUtil.setCameraPosition
 import com.hadi.distancetracker.util.Constants
 import com.hadi.distancetracker.util.ExtensionFunctions.disable
 import com.hadi.distancetracker.util.ExtensionFunctions.enable
@@ -43,6 +43,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
 
     private var locationList = mutableListOf<LatLng>()
 
+    val started = MutableLiveData(false)
 
 
     var startTime =0L
@@ -54,7 +55,8 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentMapsBinding.inflate(inflater, container, false)
-
+        binding.lifecycleOwner = this
+        binding.tracking = this
 
         binding.buttonStart.setOnClickListener {
             onStartButtonClicked()
@@ -182,6 +184,9 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
             if(stopTime != 0L){
                 showBiggerPicture()
             }
+        }
+        TrackerService.started.observe(viewLifecycleOwner){
+            started.value = it
         }
     }
 

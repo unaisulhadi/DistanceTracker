@@ -5,7 +5,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import java.text.DecimalFormat
 
-object MapUtils {
+object MapUtil {
 
     fun setCameraPosition(location: LatLng): CameraPosition {
         return CameraPosition.Builder()

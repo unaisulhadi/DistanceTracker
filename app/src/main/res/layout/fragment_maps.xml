@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
+        <variable
+            name="tracking"
+            type="com.hadi.distancetracker.ui.map.MapsFragment" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -40,6 +42,7 @@
             android:textColor="@color/black"
             android:textStyle="bold"
             android:textSize="20sp"
+            observeTracking="@{tracking.started}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -62,6 +65,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             android:text="STOP"
+            observeTracking="@{tracking.started}"
             android:backgroundTint="@color/red"
             android:visibility="invisible"
             app:layout_constraintBottom_toBottomOf="@+id/map"
