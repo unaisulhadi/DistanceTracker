@@ -2,18 +2,17 @@ package com.hadi.distancetracker.ui.map
 
 import android.content.Intent
 import android.graphics.Color
-import androidx.fragment.app.Fragment
-
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.maps.CameraUpdateFactory
-
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -21,7 +20,10 @@ import com.google.android.gms.maps.model.*
 import com.hadi.distancetracker.R
 import com.hadi.distancetracker.databinding.FragmentMapsBinding
 import com.hadi.distancetracker.service.TrackerService
+import com.hadi.distancetracker.ui.map.MapUtil.calculateDistance
+import com.hadi.distancetracker.ui.map.MapUtil.calculateElapsedTime
 import com.hadi.distancetracker.ui.map.MapUtil.setCameraPosition
+import com.hadi.distancetracker.ui.result.Result
 import com.hadi.distancetracker.util.Constants
 import com.hadi.distancetracker.util.ExtensionFunctions.disable
 import com.hadi.distancetracker.util.ExtensionFunctions.enable
@@ -183,6 +185,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
             stopTime = it
             if(stopTime != 0L){
                 showBiggerPicture()
+                displayResults()
             }
         }
         TrackerService.started.observe(viewLifecycleOwner){
@@ -234,6 +237,21 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         return false
     }
 
+    private fun displayResults() {
+        val result = com.hadi.distancetracker.ui.result.Result(
+            calculateDistance(locationList),
+            calculateElapsedTime(startTime, stopTime)
+        )
+        lifecycleScope.launch {
+            delay(2500)
+            val directions = MapsFragmentDirections.actionMapsFragmentToResultFragment(result)
+            findNavController().navigate(directions)
+            binding.buttonStart.apply {
+                hide()
+                enable()
+            }
+        }
+    }
     private fun showBiggerPicture() {
 
         val bounds = LatLngBounds.Builder()
